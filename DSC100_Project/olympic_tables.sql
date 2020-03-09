@@ -89,7 +89,7 @@ UPDATE athlete_events SET event = regexp_replace(event, E'(\\d+)( metres)', '\1M
 
 -- FIND ATHLETE OVERLAP BETWEEN athlete_events and summer/winter
 
-CREATE TEMPORARY TABLE athlete_matches(
+CREATE TABLE athlete_matches(
     id int,
     name text,
     athlete text,
@@ -97,17 +97,17 @@ CREATE TEMPORARY TABLE athlete_matches(
 );
 
 INSERT INTO athlete_matches(id, name, athlete, noc)
-(select athlete_events.id, name, athlete, noc
+(select id, name, athlete, noc
 from athlete_events, summer
 where country=noc and athlete_events.year=summer.year and (regexp_split_to_array(lower(name), E' ') <@ regexp_split_to_array(lower(athlete), E'(, | )') or
-      regexp_split_to_array(lower(name), E' ') @> regexp_split_to_array(lower(athlete), E'(, | )'))
+      regexp_split_to_array(lower(name), E' ') @> regexp_split_to_array(lower(athlete), E'(, | )')) and athlete_events.medal is not NULL
 
 union
 
 select id, name, athlete, noc
 from athlete_events, winter
 where country=noc and athlete_events.year=winter.year and (regexp_split_to_array(lower(name), E' ') <@ regexp_split_to_array(lower(athlete), E'(, | )') or
-      regexp_split_to_array(lower(name), E' ') @> regexp_split_to_array(lower(athlete), E'(, | )'))
+      regexp_split_to_array(lower(name), E' ') @> regexp_split_to_array(lower(athlete), E'(, | )')) and athlete_events.medal is not NULL
 
 order by id);
 
@@ -269,7 +269,7 @@ INSERT INTO athlete(name, sex, weight, height)
             SELECT id, name, sex, weight, height
             FROM athlete_events
             WHERE id NOT IN (SELECT id FROM athlete_matches)
-            GROUP BY id, name, sex
+            GROUP BY id, name, sex, weight, height
             ORDER BY id
                  ) temp
 
@@ -291,6 +291,16 @@ INSERT INTO athlete(name, sex, weight, height)
                 END AS gender, NULL, NULL
         FROM summer
         WHERE (athlete, country) NOT IN (SELECT (athlete, noc) FROM athlete_matches)
+
+        UNION
+
+        SELECT athlete,
+                CASE
+                   WHEN gender='Men' THEN 'M'
+                   WHEN gender='Women' THEN 'F'
+                END AS gender, NULL, NULL
+        FROM winter
+        WHERE (athlete, country) NOT IN (SELECT (athlete, noc) FROM athlete_matches)
     );
 
 INSERT INTO athlete_age(athlete_id, year, season, age)
@@ -308,7 +318,7 @@ INSERT INTO athlete_age(athlete_id, year, season, age)
     UNION
 
     SELECT a.id, w.year, 'Winter', NULL
-    FROM athlete a, summer w
+    FROM athlete a, winter w
     WHERE a.name=w.athlete
 );
 
@@ -322,16 +332,40 @@ INSERT INTO country(noc, country)
 
 INSERT INTO competitor(athlete_id, team_name, noc)
     (
-        SELECT id, team, noc
-        FROM athlete_events
-        GROUP BY id, team, noc
+--         SELECT id, team, noc
+--         FROM athlete_events
+--         GROUP BY id, team, noc
+        SELECT a.id, ae.team, ae.noc
+        FROM athlete a, athlete_events ae
+        WHERE a.name=ae.name
     );
 
 INSERT INTO event(sport, discipline, event_name)
     (
+--         SELECT sport, discipline, event
+--         FROM reformatted_athlete_events
+--         GROUP BY event, sport
+
         SELECT sport, discipline, event
         FROM reformatted_athlete_events
-        GROUP BY event, sport
+
+        UNION
+
+        SELECT sport, discipline, event
+        FROM summer
+        WHERE (athlete, country) NOT IN (
+            SELECT athlete, noc
+            FROM athlete_matches
+            )
+
+        UNION
+
+        SELECT sport, discipline, event
+        FROM winter
+        WHERE (athlete, country) NOT IN (
+            SELECT athlete, noc
+            FROM athlete_matches
+            )
     );
 
 INSERT INTO host(city, year, season)
