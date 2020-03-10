@@ -55,11 +55,11 @@ CREATE TEMPORARY TABLE winter (
     medal text
 );
 
-COPY athlete_events FROM '/Users/jacobamoul/Desktop/DSC100/Project/athlete_events.csv' CSV HEADER;
-COPY dictionary FROM '/Users/jacobamoul/Desktop/DSC100/Project/dictionary.csv' CSV HEADER;
-COPY noc_regions FROM '/Users/jacobamoul/Desktop/DSC100/Project/noc_regions.csv' CSV HEADER;
-COPY summer FROM '/Users/jacobamoul/Desktop/DSC100/Project/summer.csv' CSV HEADER;
-COPY winter FROM '/Users/jacobamoul/Desktop/DSC100/Project/winter.csv' CSV HEADER;
+COPY athlete_events FROM '/Users/joshuacastro/Desktop/data_science/dsc100/project/athlete_events.csv' CSV HEADER;
+COPY dictionary FROM '/Users/joshuacastro/Desktop/data_science/dsc100/project/dictionary.csv' CSV HEADER;
+COPY noc_regions FROM '/Users/joshuacastro/Desktop/data_science/dsc100/project/noc_regions.csv' CSV HEADER;
+COPY summer FROM '/Users/joshuacastro/Desktop/data_science/dsc100/project/summer.csv' CSV HEADER;
+COPY winter FROM '/Users/joshuacastro/Desktop/data_science/dsc100/project/winter.csv' CSV HEADER;
 
 UPDATE athlete_events
 SET age = NULL
