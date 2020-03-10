@@ -89,7 +89,7 @@ UPDATE athlete_events SET event = regexp_replace(event, E'(\\d+)( metres)', '\1M
 
 -- FIND ATHLETE OVERLAP BETWEEN athlete_events and summer/winter
 
-CREATE TEMPORARY TABLE athlete_matches(
+CREATE TABLE athlete_matches(
     id int,
     name text,
     athlete text,
@@ -100,14 +100,14 @@ INSERT INTO athlete_matches(id, name, athlete, noc)
 (select id, name, athlete, noc
 from athlete_events, summer
 where country=noc and athlete_events.year=summer.year and (regexp_split_to_array(lower(name), E' ') <@ regexp_split_to_array(lower(athlete), E'(, | )') or
-      regexp_split_to_array(lower(name), E' ') @> regexp_split_to_array(lower(athlete), E'(, | )'))
+      regexp_split_to_array(lower(name), E' ') @> regexp_split_to_array(lower(athlete), E'(, | )')) and athlete_events.medal is not NULL
 
 union
 
 select id, name, athlete, noc
 from athlete_events, winter
 where country=noc and athlete_events.year=winter.year and (regexp_split_to_array(lower(name), E' ') <@ regexp_split_to_array(lower(athlete), E'(, | )') or
-      regexp_split_to_array(lower(name), E' ') @> regexp_split_to_array(lower(athlete), E'(, | )'))
+      regexp_split_to_array(lower(name), E' ') @> regexp_split_to_array(lower(athlete), E'(, | )')) and athlete_events.medal is not NULL
 
 order by id);
 
@@ -170,7 +170,7 @@ CREATE TABLE reformatted_athlete_events
 );
 
 INSERT INTO reformatted_athlete_events(id, sport, discipline, sex, event)
-SELECT id, sport, (regexp_split_to_array(event, E'\\s(Wo)?[Mm]en\'s\\s'))[1] as discipline, sex,
+(SELECT id, sport, (regexp_split_to_array(event, E'\\s(Wo)?[Mm]en\'s\\s'))[1] as discipline, sex,
        (regexp_split_to_array(event, E'\\s(Wo)?[Mm]en\'s\\s'))[2] as event
 FROM athlete_events
 WHERE lower(event) NOT LIKE '%mixed%'
@@ -180,7 +180,8 @@ union
 SELECT id, sport, (regexp_split_to_array(event, E'\\sMixed\\s'))[1], sex,
        CONCAT('Mixed ', (regexp_split_to_array(event, E'\\sMixed\\s'))[2])
 FROM athlete_events
-WHERE lower(event)  LIKE '%mixed%';
+WHERE lower(event)  LIKE '%mixed%');
+
 
 -- CREATE 3NF SCHEMA
 
@@ -188,18 +189,18 @@ CREATE TABLE athlete
 (
     id         SERIAL PRIMARY KEY,
     name       text NOT NULL,
-    sex        varchar(5)
+    sex        varchar(5),
+    weight     float,
+    height     float
 );
 
 
-CREATE TABLE athlete_measurements
+CREATE TABLE athlete_age
 (
     athlete_id int,
     year       int,
     season     varchar(6),
     age        int,
-    weight     float,
-    height     float,
     CONSTRAINT athlete_measure_pk PRIMARY KEY(athlete_id, year, season),
     CONSTRAINT athlete_fk FOREIGN KEY(athlete_id) REFERENCES
         athlete (id)
@@ -229,8 +230,9 @@ CREATE TABLE country
 CREATE TABLE event
 (
     id         SERIAL PRIMARY KEY,
-    event_name text,
-    sport      text
+    sport      text,
+    discipline text,
+    event_name text
 );
 
 CREATE TABLE host
@@ -254,24 +256,26 @@ CREATE TABLE results
 );
 
 
-INSERT INTO athlete(name, sex)
+-- POPULATE NEW SCHEMA
+
+INSERT INTO athlete(name, sex, weight, height)
     (
 --         SELECT id, name, sex
 --         FROM athlete_events
 --         GROUP BY id, name, sex
 --         ORDER BY id
-        SELECT name, sex
+        SELECT name, sex, weight, height
         FROM (
-            SELECT id, name, sex
+            SELECT id, name, sex, weight, height
             FROM athlete_events
             WHERE id NOT IN (SELECT id FROM athlete_matches)
-            GROUP BY id, name, sex
+            GROUP BY id, name, sex, weight, height
             ORDER BY id
                  ) temp
 
         UNION
 
-        SELECT name, sex
+        SELECT name, sex, weight, height
         FROM (
             SELECT id, name, sex
             FROM athlete_events
@@ -284,10 +288,39 @@ INSERT INTO athlete(name, sex)
                 CASE
                    WHEN gender='Men' THEN 'M'
                    WHEN gender='Women' THEN 'F'
-                END AS gender
+                END AS gender, NULL, NULL
         FROM summer
         WHERE (athlete, country) NOT IN (SELECT (athlete, noc) FROM athlete_matches)
+
+        UNION
+
+        SELECT athlete,
+                CASE
+                   WHEN gender='Men' THEN 'M'
+                   WHEN gender='Women' THEN 'F'
+                END AS gender, NULL, NULL
+        FROM winter
+        WHERE (athlete, country) NOT IN (SELECT (athlete, noc) FROM athlete_matches)
     );
+
+INSERT INTO athlete_age(athlete_id, year, season, age)
+(
+    SELECT a.id, ae.year, ae.season, ae.age
+    FROM athlete a, athlete_events ae
+    WHERE a.name=ae.name
+
+    UNION
+
+    SELECT a.id, s.year, 'Summer', NULL
+    FROM athlete a, summer s
+    WHERE a.name=s.athlete
+
+    UNION
+
+    SELECT a.id, w.year, 'Winter', NULL
+    FROM athlete a, winter w
+    WHERE a.name=w.athlete
+);
 
 INSERT INTO country(noc, country)
     (
@@ -299,16 +332,40 @@ INSERT INTO country(noc, country)
 
 INSERT INTO competitor(athlete_id, team_name, noc)
     (
-        SELECT id, team, noc
-        FROM athlete_events
-        GROUP BY id, team, noc
+--         SELECT id, team, noc
+--         FROM athlete_events
+--         GROUP BY id, team, noc
+        SELECT a.id, ae.team, ae.noc
+        FROM athlete a, athlete_events ae
+        WHERE a.name=ae.name
     );
 
-INSERT INTO event(event_name, sport)
+INSERT INTO event(sport, discipline, event_name)
     (
-        SELECT event, sport
-        FROM athlete_events
-        GROUP BY event, sport
+--         SELECT sport, discipline, event
+--         FROM reformatted_athlete_events
+--         GROUP BY event, sport
+
+        SELECT sport, discipline, event
+        FROM reformatted_athlete_events
+
+        UNION
+
+        SELECT sport, discipline, event
+        FROM summer
+        WHERE (athlete, country) NOT IN (
+            SELECT athlete, noc
+            FROM athlete_matches
+            )
+
+        UNION
+
+        SELECT sport, discipline, event
+        FROM winter
+        WHERE (athlete, country) NOT IN (
+            SELECT athlete, noc
+            FROM athlete_matches
+            )
     );
 
 INSERT INTO host(city, year, season)
@@ -330,5 +387,3 @@ FROM competitor c, event e, host h,
 WHERE c.athlete_id = a.id AND c.team_name = a.team AND
       e.event_name = a.event AND h.city = a.city AND
       h.year = a.year;
-
--- REFORMAT ELEMENTS OF THE TABLES
