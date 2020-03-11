@@ -94,6 +94,18 @@ UPDATE summer
 SET event = concat(event, 'Slalom')
 WHERE discipline ilike 'canoe slalom';
 
+UPDATE summer AS s SET event = c.col_a
+FROM (values
+    ) as c(col_a, col_b)
+
+UPDATE summer
+SET event = regexp_replace(event, E'(\\d{1,2}),(\\d{3})', E'\1\2')
+WHERE sport ilike '%canoe%';
+
+UPDATE summer
+SET event = regexp_replace(event, E'10KM', '10000M')
+WHERE sport ilike '%canoe%';
+
 UPDATE summer
 SET discipline = 'Canoeing'
 WHERE discipline ilike '%canoe%';
