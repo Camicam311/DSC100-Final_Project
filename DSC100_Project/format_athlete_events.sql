@@ -243,12 +243,14 @@ SAVEPOINT pre_update;
 
 UPDATE athlete_events
 SET sport = 'Equestrian',
-    event = 'Equestrian'
-WHERE sport ilike 'equestianism';
+    discipline = 'Equestrian'
+WHERE sport ilike 'equestrianism';
 
 UPDATE athlete_events
 SET event = regexp_replace(event, E'Mixed ', '')
 WHERE event ilike 'mixed%';
+
+SAVEPOINT pre_fix;
 
 UPDATE athlete_events
 SET discipline = 'Dressage',
@@ -257,13 +259,15 @@ WHERE event ilike '%dressage%';
 
 UPDATE athlete_events
 SET discipline = 'Vaulting',
-    event = regexp_replace(event, 'Vaulting, ','')
+    event = regexp_replace(event, E'Vaulting, ','')
 WHERE event ilike '%vaulting%';
 
 UPDATE athlete_events
 SET discipline = 'Jumping',
-    event = regexp_replace(event, 'Jumping, ','')
+    event = regexp_replace(event, E'Jumping, ','')
 WHERE event ilike '%jump%';
+
+--ROLLBACK TO pre_update;
 
 COMMIT;
 

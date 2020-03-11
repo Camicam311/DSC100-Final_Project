@@ -1,6 +1,6 @@
 -- LOAD DATA
 
-CREATE TEMPORARY TABLE athlete_events (
+CREATE  TABLE athlete_events (
     id int,
     name text,
     sex char,
@@ -162,27 +162,21 @@ WHERE (id = 674 and athlete='ACHIK, Abdelhak') OR
 
 -- REFORMAT athlete_events.event
 
-CREATE TABLE reformatted_athlete_events
-(
-    id         int,
-    sport      text,
-    discipline text,
-    sex char,
-    event      text
-);
+ALTER TABLE athlete_events
+ADD COLUMN discipline text;
 
-INSERT INTO reformatted_athlete_events(id, sport, discipline, sex, event)
-(SELECT id, sport, (regexp_split_to_array(event, E'\\s(Wo)?[Mm]en\'s\\s'))[1] as discipline, sex,
-       (regexp_split_to_array(event, E'\\s(Wo)?[Mm]en\'s\\s'))[2] as event
-FROM athlete_events
-WHERE lower(event) NOT LIKE '%mixed%'
+UPDATE athlete_events
+SET discipline=CASE
+    WHEN lower(event) NOT LIKE '%mixed%' THEN (regexp_split_to_array(event, E'\\s(Wo)?[Mm]en\'s\\s'))[1]
+    WHEN lower(event) LIKE '%mixed%' THEN (regexp_split_to_array(event, E'\\sMixed\\s'))[1]
+    END;
+UPDATE athlete_events
+SET event=
+    CASE
+        WHEN lower(event) NOT LIKE '%mixed%' THEN (regexp_split_to_array(event, E'\\s(Wo)?[Mm]en\'s\\s'))[2]
+        WHEN lower(event) LIKE '%mixed%' THEN CONCAT('Mixed ', (regexp_split_to_array(event, E'\\sMixed\\s'))[2])
+    END;
 
-union
-
-SELECT id, sport, (regexp_split_to_array(event, E'\\sMixed\\s'))[1], sex,
-       CONCAT('Mixed ', (regexp_split_to_array(event, E'\\sMixed\\s'))[2])
-FROM athlete_events
-WHERE lower(event)  LIKE '%mixed%');
 
 
 -- CREATE 3NF SCHEMA
