@@ -84,7 +84,9 @@ ALTER TABLE athlete_events
 
 UPDATE athlete_events SET team = (regexp_match(team, E'(^\\d{0,2}[^\\d]*(#\\d+)?( \\d{1,4})?)(-\\d{1,2})?$'))[1];
 
-UPDATE athlete_events SET event = regexp_replace(event, E'(\\d+)( metres)', '\1M');
+UPDATE athlete_events SET event = regexp_replace(event, E'(\\d+)( metres)', '\1M', 'g');
+UPDATE athlete_events SET event = regexp_replace(event, E'(\\d+)( kilometres)', '\1KM', 'g');
+
 
 
 -- FIND ATHLETE OVERLAP BETWEEN athlete_events and summer/winter
