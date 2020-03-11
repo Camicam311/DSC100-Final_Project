@@ -1,6 +1,6 @@
 -- LOAD DATA
 
-CREATE  TABLE athlete_events (
+CREATE TABLE athlete_events (
     id int,
     name text,
     sex char,
