@@ -236,6 +236,39 @@ WHERE lower(discipline) like '%diving%';
 --ROLLBACK TO SAVEPOINT pre_update;
 COMMIT;
 
+-- EQUESTRIANISM
+BEGIN;
+
+SAVEPOINT pre_update;
+
+UPDATE athlete_events
+SET sport = 'Equestrian',
+    event = 'Equestrian'
+WHERE sport ilike 'equestianism';
+
+UPDATE athlete_events
+SET event = regexp_replace(event, E'Mixed ', '')
+WHERE event ilike 'mixed%';
+
+UPDATE athlete_events
+SET discipline = 'Dressage',
+    event = regexp_replace(event, 'Dressage, ','')
+WHERE event ilike '%dressage%';
+
+UPDATE athlete_events
+SET discipline = 'Vaulting',
+    event = regexp_replace(event, 'Vaulting, ','')
+WHERE event ilike '%vaulting%';
+
+UPDATE athlete_events
+SET discipline = 'Jumping',
+    event = regexp_replace(event, 'Jumping, ','')
+WHERE event ilike '%jump%';
+
+COMMIT;
+
+
+
 
 
 
