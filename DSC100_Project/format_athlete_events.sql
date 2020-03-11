@@ -168,6 +168,74 @@ WHERE sport ilike '%croquet%';
 --ROLLBACK TO pre_update;
 COMMIT;
 
+-- CROSS COUNTRY SKIING
+-- begin transaction block
+BEGIN;
+-- add savepoint if needed
+SAVEPOINT pre_update;
+
+-- change
+UPDATE athlete_events
+SET event = regexp_replace(event, E'( km)+', 'KM'),
+    sport = 'Skiing'
+WHERE lower(sport) like '%cross country skiing%';
+-- ROLLBACK TO SAVEPOINT pre_update;
+COMMIT;
+
+
+-- CYCLING
+-- begin transaction block
+BEGIN;
+-- add savepoint if needed
+SAVEPOINT pre_update;
+
+UPDATE summer
+SET event = 'BMX'
+WHERE lower(discipline) like '%cycling bmx%' and lower(event) like 'individual';
+
+UPDATE summer
+SET discipline = 'Cycling'
+WHERE lower(discipline) like '%cycling%';
+
+UPDATE summer
+SET event = regexp_replace(event, E'(\\()(\\d+.\\d*(KM|M){1,2})(\\))', '')
+WHERE discipline ilike '%cycling%';
+
+UPDATE summer
+SET event = regexp_replace(event, E'\,','')
+WHERE discipline ilike '%cycling%';
+
+UPDATE summer
+SET event = regexp_replace(event, 'mile', 'Mile')
+WHERE discipline ilike '%cycling%';
+
+-- ROLLBACK TO SAVEPOINT pre_update;
+COMMIT;
+
+-- DIVING
+BEGIN;
+-- add savepoint if needed
+SAVEPOINT pre_update;
+-- change
+UPDATE athlete_events
+SET sport = 'Aquatic'
+WHERE lower(sport) like '%diving%';
+
+UPDATE summer
+SET event = regexp_replace(event, E'\\s?\\d{1,2}M\\s?', '')
+WHERE lower(discipline) like '%diving%';
+
+--ROLLBACK TO SAVEPOINT pre_update;
+COMMIT;
+
+
+
+
+
+
+
+
+
 
 
 
