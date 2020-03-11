@@ -141,5 +141,34 @@ WHERE sport ilike '%canoe%';
 COMMIT;
 
 
+-- CROQUET
+-- begin transaction block
+BEGIN;
+-- add savepoint if needed
+SAVEPOINT pre_update;
+-- change
+UPDATE summer
+SET event =  regexp_replace(event, 'Double', 'Doubles')
+WHERE lower(sport) like '%croquet%';
+
+-- change
+UPDATE summer
+SET event = regexp_replace(event, 'Individual 1', 'Singles, One')
+WHERE lower(sport) like '%croquet%';
+
+-- change
+UPDATE summer
+SET event =  regexp_replace(event, 'Individual 2', 'Singles, Two')
+WHERE lower(sport) like '%croquet%';
+
+UPDATE summer
+SET event = concat('Mixed ', event)
+WHERE sport ilike '%croquet%';
+
+--ROLLBACK TO pre_update;
+COMMIT;
+
+
+
 
 
