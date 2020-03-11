@@ -84,7 +84,8 @@ ALTER TABLE athlete_events
 
 UPDATE athlete_events SET team = (regexp_match(team, E'(^\\d{0,2}[^\\d]*(#\\d+)?( \\d{1,4})?)(-\\d{1,2})?$'))[1];
 
-UPDATE athlete_events SET event = regexp_replace(event, E'(\\d+)( metres)', '\1M');
+UPDATE athlete_events SET event = regexp_replace(event, E'(\\d+)( metres)', '\1M', 'g');
+UPDATE athlete_events SET event = regexp_replace(event, E'(\\d+)( kilometres)', '\1KM', 'g');
 
 
 -- FIND ATHLETE OVERLAP BETWEEN athlete_events and summer/winter
@@ -93,21 +94,26 @@ CREATE TABLE athlete_matches(
     id int,
     name text,
     athlete text,
-    noc text
+    noc text,
+    year int
 );
 
-INSERT INTO athlete_matches(id, name, athlete, noc)
-(select id, name, athlete, noc
+INSERT INTO athlete_matches(id, name, athlete, noc, year)
+(select id, name, athlete, noc, min(athlete_events.year)
 from athlete_events, summer
 where country=noc and athlete_events.year=summer.year and (regexp_split_to_array(lower(name), E' ') <@ regexp_split_to_array(lower(athlete), E'(, | )') or
       regexp_split_to_array(lower(name), E' ') @> regexp_split_to_array(lower(athlete), E'(, | )')) and athlete_events.medal is not NULL
 
+group by id, name, athlete, noc
+
 union
 
-select id, name, athlete, noc
+select id, name, athlete, noc, min(athlete_events.year)
 from athlete_events, winter
 where country=noc and athlete_events.year=winter.year and (regexp_split_to_array(lower(name), E' ') <@ regexp_split_to_array(lower(athlete), E'(, | )') or
       regexp_split_to_array(lower(name), E' ') @> regexp_split_to_array(lower(athlete), E'(, | )')) and athlete_events.medal is not NULL
+
+group by id, name, athlete, noc
 
 order by id);
 
@@ -204,7 +210,7 @@ CREATE TABLE athlete_age
 CREATE TABLE competitor
 (
     id         SERIAL PRIMARY KEY,
-    athlete_id int     NULL,
+    athlete_id int,
     team_name  text    NULL,
     noc    char(3) NOT NULL,
     CONSTRAINT athlete_fk FOREIGN KEY (athlete_id) REFERENCES athlete (id)
@@ -216,9 +222,18 @@ CREATE TABLE competitor
 CREATE TABLE country
 (
     noc    char(3) PRIMARY KEY,
-    country text
+    country text,
+    population int,
+    gdp_per_capita float
 );
 
+CREATE TABLE country_join_aid
+(
+    code char(3),
+    noc char(3),
+    country text,
+    region text
+);
 
 CREATE TABLE event
 (
@@ -315,13 +330,47 @@ INSERT INTO athlete_age(athlete_id, year, season, age)
     WHERE a.name=w.athlete
 );
 
-INSERT INTO country(noc, country)
+INSERT INTO country(noc, country, population, gdp_per_capita)
     (
-        SELECT code, country
+        WITH already_in(code) AS
+            (SELECT distinct code FROM dictionary)
+
+        SELECT distinct code, country, population, gdp_per_capita
         FROM dictionary
-        GROUP BY code, country
-        ORDER BY code
+
+        UNION
+
+        SELECT distinct noc, region, NULL, NULL
+        FROM noc_regions
+        WHERE noc NOT IN (SELECT code from already_in)
     );
+
+INSERT INTO country_join_aid(code, noc, country, region)
+(
+    WITH country_sub(country, region) AS
+    (SELECT D.country, N.region
+    FROM dictionary D, noc_regions N
+    WHERE D.country <> N.region and
+          D.country = any(string_to_array(N.region,' '))
+          and N.region <> 'South Sudan' and N.region <> 'Democratic Republic of the Congo' and
+          N.region <> 'Papua New Guinea' and N.region <> 'American Samoa')
+
+    SELECT distinct D.code, N.noc, D.country, N.region
+    FROM dictionary D, noc_regions N, country_sub
+    WHERE D.country=N.region OR (D.country=country_sub.country AND N.region=country_sub.region) OR
+          D.code=N.noc
+
+    UNION
+    SELECT 'South Sudan', 'South Sudan', 'SSD', 'SSD'
+    UNION
+    SELECT 'Congo, Dem Rep', 'Democratic Republic of the Congo', 'COD', 'COD'
+    UNION
+    SELECT 'Papua New Guinea', 'Papua New Guinea', 'PNG', 'PNG'
+    UNION
+    SELECT 'American Samoa', 'American Samoa', 'ASA', 'ASA'
+
+    ORDER BY country
+);
 
 INSERT INTO competitor(athlete_id, team_name, noc)
     (
@@ -340,7 +389,7 @@ INSERT INTO event(sport, discipline, event_name)
 --         GROUP BY event, sport
 
         SELECT sport, discipline, event
-        FROM reformatted_athlete_events
+        FROM athlete_events
 
         UNION
 
