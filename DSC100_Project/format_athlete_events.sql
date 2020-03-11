@@ -222,7 +222,15 @@ SET sport = 'Aquatic'
 WHERE lower(sport) like '%diving%';
 
 UPDATE summer
-SET event = regexp_replace(event, E'\\s?\\d{1,2}M\\s?', '')
+SET event = regexp_replace(event, E'\\s\\d{1,2}M', '')
+WHERE lower(discipline) like '%diving%';
+
+UPDATE summer
+SET event = regexp_replace(event, E'\\d{1,2}M\\s', '')
+WHERE lower(discipline) like '%diving%';
+
+UPDATE summer
+SET event = regexp_replace(event, E'\\s\\d{1,2}M\\s', ' ')
 WHERE lower(discipline) like '%diving%';
 
 --ROLLBACK TO SAVEPOINT pre_update;
