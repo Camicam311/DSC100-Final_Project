@@ -90,13 +90,33 @@ BEGIN;
 --add savepoint
 SAVEPOINT pre_update;
 --make changes
+UPDATE athlete_events
+SET event = regexp_replace(event, E'\,', '')
+WHERE sport ilike '%canoe%';
+
 UPDATE summer
 SET event = concat(event, 'Slalom')
-WHERE discipline ilike 'canoe slalom';
+WHERE discipline ilike '%slalom%';
 
-UPDATE summer AS s SET event = c.col_a
-FROM (values
-    ) as c(col_a, col_b)
+UPDATE summer
+SET event = regexp_replace(event, E'C', 'Canadian')
+WHERE sport ilike '%canoe%';
+
+UPDATE summer
+SET event = regexp_replace(event, E'K', 'Kayak')
+WHERE sport ilike '%canoe%';
+
+UPDATE summer
+SET event = regexp_replace(event, E'-1', ' Singles')
+WHERE sport ilike '%canoe%';
+
+UPDATE summer
+SET event = regexp_replace(event, E'-2', ' Doubles')
+WHERE sport ilike '%canoe%';
+
+UPDATE summer
+SET event = regexp_replace(event, E'-4', ' Fours')
+WHERE sport ilike '%canoe%';
 
 UPDATE summer
 SET event = regexp_replace(event, E'(\\d{1,2}),(\\d{3})', E'\1\2')
@@ -107,12 +127,18 @@ SET event = regexp_replace(event, E'10KM', '10000M')
 WHERE sport ilike '%canoe%';
 
 UPDATE summer
+SET event = regexp_replace(event, E'(\\()(\\w+\\s*\\w*)(\\))', '')
+WHERE sport ilike '%canoe%';
+
+UPDATE summer
 SET discipline = 'Canoeing'
 WHERE discipline ilike '%canoe%';
 
 UPDATE summer
 SET sport = 'Canoeing'
 WHERE sport ilike '%canoe%';
+
+COMMIT;
 
 
 
