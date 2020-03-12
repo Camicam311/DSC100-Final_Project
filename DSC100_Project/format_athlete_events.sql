@@ -745,31 +745,39 @@ WHERE discipline ilike 'wrestling Gre-R';
 --ROLLBACK TO SAVEPOINT pre_update;
 COMMIT;
 
+BEGIN;
 
+SAVEPOINT pre_up;
 
+UPDATE summer
+SET athlete = 'GIRARD, Christine', country='CAN'
+WHERE (athlete ilike 'pending' and
+       discipline ilike 'weightlifting' and
+       event ilike '63KG' and
+       medal ilike 'gold' and
+       year = 2012 and
+       gender='Women' and
+       city ilike 'london');
 
+UPDATE summer
+SET athlete = 'MIN-JAE, Kim', country='KOR'
+WHERE (athlete ilike 'pending' and
+       discipline ilike 'weightlifting' and
+       event ilike '94KG' and
+       medal ilike 'silver' and
+       year = 2012 and
+       gender='Men' and
+       city ilike 'london');
 
+UPDATE summer
+SET athlete = 'JAMAL, Maryam Yusuf', country='BRN'
+WHERE (athlete ilike 'pending' and
+       discipline ilike 'athletics' and
+       event ilike '1500M' and
+       medal ilike 'gold' and
+       year = 2012 and
+       gender='Women' and
+       city ilike 'london');
 
-select distinct sport, discipline, event, gender
-from summer
-where discipline ilike 'trampolining%'
-group by sport, discipline, event,gender
-order by gender;
-select distinct sport, discipline, event, sex
-from athlete_events
-where discipline Ilike 'trampo%'
-group by sport, discipline, event, sex
-order by sex;
-
-
-
-
-
-
-
-
-
-
-
-
-
+-- ROLLBACK TO pre_up;
+COMMIT;
