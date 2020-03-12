@@ -64,14 +64,15 @@ from year_ath
 GROUP BY year;
 
 -- Q5
-SELECT r.host_id, count(distinct a.athlete_id)
+SELECT h.season, h.year, count(distinct a.id)
 from results r
 JOIN host h ON h.id = r.host_id
 JOIN competitor c ON c.id = r.competitor_id
-JOIN athlete a ON c.athlete_id = a.athlete_id
-JOIN country ct ON c.alt_noc = ct.alt_noc
+JOIN athlete a ON c.athlete_id = a.id
+JOIN country ct ON c.noc = ct.alt_noc
 WHERE year > 1947 AND alt_noc ilike 'ind'
-GROUP BY r.host_id;
+GROUP BY h.season, h.year
+ORDER BY h.year, h.season;
 
 
 -- Q6
