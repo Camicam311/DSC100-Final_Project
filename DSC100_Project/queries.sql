@@ -106,8 +106,8 @@ FROM country C, results R
 JOIN competitor CP ON R.competitor_id=CP.id
 JOIN athlete A ON CP.athlete_id = A.id
 JOIN event E ON R.event_id = E.id
-WHERE A.sex='M' AND E.event_name ILIKE '%marathon%' AND E.sport='Athletics'
+WHERE A.sex='M' AND E.event_name ILIKE '%marathon%' AND E.sport='Athletics' AND C.alt_noc=CP.noc
 GROUP BY C.country
 
 ORDER BY gold_count DESC
-LIMIT 1;
+LIMIT 10;
