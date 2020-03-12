@@ -5,22 +5,23 @@ WITH in_barca(noc, num_competitors) as
         FROM competitor c
         JOIN results r ON c.id = r.competitor_id
         JOIN host h ON r.event_id = h.id
-        WHERE h.city ilike '%barcelona%' and h.year = 1992
+        WHERE (h.main_city ilike '%barcelona%' or h.alt_city ilike '%barcelona%') and h.year = 1992
         GROUP BY noc
     ),
     not_in_barca(noc, num_competitors) as
     (
         SELECT main_noc, 0
-        FROM country c
-        WHERE cja.alt_noc NOT IN (SELECT noc from in_barca)
-        GROUP BY noc
+        FROM country ctry
+        WHERE ctry.alt_noc NOT IN (SELECT noc from in_barca)
+        GROUP BY main_noc
     )
 
 SELECT noc, num_competitors from in_barca
 
 UNION
 
-SELECT noc, num_competitors from not_in_barca;
+SELECT noc, num_competitors from not_in_barca
+order by num_competitors DESC;
 
 
 -- Q2
