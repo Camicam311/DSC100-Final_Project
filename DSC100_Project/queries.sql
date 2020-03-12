@@ -12,7 +12,7 @@ WITH in_barca(noc, num_competitors) as
     (
         SELECT main_noc, 0
         FROM country c
-        WHERE cja.alt_noc NOT IN in_barca
+        WHERE cja.alt_noc NOT IN (SELECT noc from in_barca)
         GROUP BY noc
     )
 
