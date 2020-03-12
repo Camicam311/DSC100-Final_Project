@@ -81,20 +81,21 @@ ORDER BY e.event, a.gender, r.medal, ;
 SELECT h.year,
        sum(
            CASE WHEN r.medal = 'Gold' THEN 1
-           ELSE 0
+           ELSE 0 END
            ) AS gold,
        sum(
            CASE WHEN r.medal = 'Silver' THEN 1
-           ELSE 0
+           ELSE 0 END
            ) AS silver,
        sum(
            CASE WHEN r.medal = 'Bronze' THEN 1
-           ELSE 0
+           ELSE 0 END
            ) AS bronze
 FROM results r
 JOIN event e ON e.id = r.event_id
 JOIN competitor c ON c.id = r.competitor_id
-JOIN athlete a ON c.athlete_id = a.athlete_id
+JOIN athlete a ON c.athlete_id = a.id
+JOIN host h ON r.host_id = h.id
 WHERE a.name ilike '%michael%phelps%' or a.name ilike '%phelps%michael%'
 GROUP BY h.year;
 
