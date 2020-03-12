@@ -50,21 +50,23 @@ WHERE a.id IN (SELECT a.id
 
 
 -- Q4
-WITH year_ath(year, athlete) as (
-    SELECT distinct h.year, a.id
+WITH id_ath(id, athlete) as (
+    SELECT distinct h.id, a.id
     from results r
     JOIN host h ON h.id = r.host_id
     JOIN competitor c ON r.competitor_id = c.id
     JOIN athlete a ON c.athlete_id = a.id
     WHERE h.year > 1940
-    GROUP BY a.id, h.year
+    GROUP BY a.id, h.id
     HAVING count(distinct event_id) > 3
-    ORDER BY h.year
+    ORDER BY h.id
 )
 
-SELECT year, count(athlete)
-from year_ath
-GROUP BY year;
+SELECT h.year, count(athlete)
+FROM id_ath, host h
+WHERE h.id=id_ath.id
+GROUP BY h.year
+ORDER BY h.year;
 
 -- Q5
 SELECT h.season, h.year, count(distinct a.id)
