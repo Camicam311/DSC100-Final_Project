@@ -98,17 +98,13 @@ GROUP BY h.year;
 
 
 -- Q8 WIP
-WITH gold_counts(noc, count) as (
-    SELECT c.noc, sum(
-           CASE WHEN r.medal = 'Gold' THEN 1
-           ELSE 0
-           ) AS gold
-    FROM results r
-    JOIN event e ON e.id = r.event_id
-    JOIN competitor c ON c.id = r.competitor_id
-    GROUP BY c.noc;
-    )
+select C.country, sum(CASE WHEN R.medal='Gold' THEN 1 ELSE 0 END) as gold_count
+FROM country C, results R
+JOIN competitor CP ON R.competitor_id=CP.id
+JOIN athlete A ON CP.athlete_id = A.id
+JOIN event E ON R.event_id = E.id
+WHERE A.sex='M' AND E.event_name ILIKE '%marathon%' AND E.sport='Athletics'
+GROUP BY C.country
 
-SELECT noc
-FROM country cty
-JOIN gold_counts gc ON gc.noc = cty.alt_noc
+ORDER BY gold_count DESC
+LIMIT 1;
