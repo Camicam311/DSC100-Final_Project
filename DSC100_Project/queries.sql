@@ -37,14 +37,16 @@ WHERE e.sport ilike 'Curling' and (h.main_city ilike 'vancouver' or
 
 
 -- Q3
-SELECT distinct a.name
+SELECT a.name
 FROM athlete a
-JOIN competitor c ON a.id = c.athlete_id
-JOIN results r ON c.id = r.competitor_id
-JOIN host h ON h.id = r.host_id
-WHERE h.year > 1900
-GROUP BY a.name, host_id
-having count(distinct event_id) > 4;
+WHERE a.id IN (SELECT a.id
+                FROM athlete a
+                JOIN competitor c ON a.id = c.athlete_id
+                JOIN results r ON c.id = r.competitor_id
+                JOIN host h ON h.id = r.host_id
+                WHERE h.year > 1900
+                GROUP BY a.id, host_id
+                having count(distinct event_id) > 4);
 
 
 -- Q4
