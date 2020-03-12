@@ -25,11 +25,12 @@ order by num_competitors DESC;
 
 
 -- Q2
-SELECT distinct noc
+SELECT distinct c2.country
 FROM competitor c
 JOIN results r ON c.id = r.competitor_id
 JOIN event e ON e.id = r.event_id
 JOIN host h ON h.id = r.host_id
+JOIN country c2 on c.noc = c2.alt_noc
 WHERE e.sport ilike 'Curling' and (h.main_city ilike 'vancouver' or
                                    h.alt_city ilike 'vancouver') and
       h.year = 2010;
