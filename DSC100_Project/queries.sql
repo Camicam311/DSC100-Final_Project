@@ -30,16 +30,18 @@ FROM competitor c
 JOIN results r ON c.id = r.competitor_id
 JOIN event e ON e.id = r.event_id
 JOIN host h ON h.id = r.host_id
-WHERE e.sport ilike 'Curling' and h.city ilike 'vancouver' and h.year = 2010;
+WHERE e.sport ilike 'Curling' and (h.main_city ilike 'vancouver' or
+                                   h.alt_city ilike 'vancouver') and
+      h.year = 2010;
 
 
 -- Q3
-SELECT a.name
+SELECT distinct a.name
 FROM athlete a
 JOIN competitor c ON a.id = c.athlete_id
 JOIN results r ON c.id = r.competitor_id
 JOIN host h ON h.id = r.host_id
-WHERE h.year > 1940
+WHERE h.year > 1900
 GROUP BY a.name, host_id
 having count(distinct event_id) > 4;
 
