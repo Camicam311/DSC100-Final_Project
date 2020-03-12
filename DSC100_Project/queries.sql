@@ -4,7 +4,7 @@ WITH in_barca(noc, num_competitors) as
         SELECT noc, count(distinct competitor_id)
         FROM competitor c
         JOIN results r ON c.id = r.competitor_id
-        JOIN host h ON r.event_id = h.id
+        JOIN host h ON r.host_id = h.id
         WHERE (h.main_city ilike '%barcelona%' or h.alt_city ilike '%barcelona%') and h.year = 1992
         GROUP BY noc
     ),
