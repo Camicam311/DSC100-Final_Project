@@ -139,4 +139,32 @@ LIMIT 10;
 
 
 -- Q9
+WITH aey(aid, eid, year, diff_year, diff_med) AS
+        (SELECT distinct a.id, e.id, h.year,
+                         h.year - lag(h.year) over (PARTITION BY a.id, e.id ORDER BY a.id, e.id, h.year) as diff_year,
+                         (CASE r.medal
+                           WHEN 'Gold' THEN 3
+                           WHEN 'Silver' THEN 2
+                           WHEN 'Bronze' THEN 1
+                          END) - lag((CASE r.medal
+                           WHEN 'Gold' THEN 3
+                           WHEN 'Silver' THEN 2
+                           WHEN 'Bronze' THEN 1
+                          END)) over (PARTITION BY a.id, e.id ORDER BY a.id, e.id, h.year) as diff_med
+        FROM athlete a
+        JOIN competitor c on a.id = c.athlete_id
+        JOIN results r on c.id = r.competitor_id
+        JOIN host h on r.host_id = h.id
+        JOIN event e on r.event_id = e.id),
+     gtr3(aid, eid) as
+        (SELECT aid, eid
+        FROM aey
+        where diff_year<>0
+        group by aid, eid
+        having count(*)>=3 and max(diff_year)<=4 and min(diff_med)>=0),
+     good_athletes(ath_id) as
+        (select aey.aid from aey, gtr3 where aey.aid=gtr3.aid and aey.eid=gtr3.eid and diff_year<>0 and diff_med>=0)
 
+select distinct name
+from athlete, good_athletes
+where id = ath_id;
