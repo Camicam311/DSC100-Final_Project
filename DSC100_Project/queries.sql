@@ -47,14 +47,21 @@ having count(distinct event_id) > 4;
 
 
 -- Q4
-SELECT h.year, count(distinct a.athlete_id)
-from results r
-JOIN host h ON h.id = r.host_id
-JOIN competitor c ON r.competitor_id = c.id
-JOIN athlete a ON c.athlete_id = a.athlete_id
-WHERE h.year > 1940
-GROUP BY h.year
-HAVING count(distinct event_id) > 3;
+WITH year_ath(year, athlete) as (
+    SELECT distinct h.year, a.id
+    from results r
+    JOIN host h ON h.id = r.host_id
+    JOIN competitor c ON r.competitor_id = c.id
+    JOIN athlete a ON c.athlete_id = a.id
+    WHERE h.year > 1940
+    GROUP BY a.id, h.year
+    HAVING count(distinct event_id) > 3
+    ORDER BY h.year
+)
+
+SELECT year, count(athlete)
+from year_ath
+GROUP BY year;
 
 -- Q5
 SELECT r.host_id, count(distinct a.athlete_id)
@@ -100,7 +107,7 @@ WHERE a.name ilike '%michael%phelps%' or a.name ilike '%phelps%michael%'
 GROUP BY h.year;
 
 
--- Q8 WIP
+-- Q8
 select C.country, sum(CASE WHEN R.medal='Gold' THEN 1 ELSE 0 END) as gold_count
 FROM country C, results R
 JOIN competitor CP ON R.competitor_id=CP.id
