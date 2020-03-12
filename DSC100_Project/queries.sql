@@ -75,13 +75,25 @@ GROUP BY r.host_id;
 
 
 -- Q6
-SELECT a.gender e.event, a.name, r.medal
+SELECT e.discipline, e.event_name, a.sex, a.name, r.medal, c.noc
 FROM results r
-JOIN event e ON e.id = r.event_id
-JOIN competitor c ON c.id = r.competitor_id
-JOIN athlete a ON c.athlete_id = a.athlete_id
-WHERE e.discipline ilike 'swimming' AND r.medal IS NOT NULL AND e.year = 2004
-ORDER BY e.event, a.gender, r.medal, ;
+JOIN event e on r.event_id = e.id
+JOIN competitor c on r.competitor_id = c.id
+JOIN athlete a on c.athlete_id = a.id
+JOIN host h on r.host_id = h.id
+WHERE e.discipline ILIKE '%swim%' AND
+      h.year=2004 AND
+      h.season='Summer' AND
+      r.medal IS NOT NULL
+GROUP BY e.discipline, e.event_name, a.sex, a.name, r.medal, c.noc
+ORDER BY e.discipline,
+         e.event_name,
+         a.sex,
+         (CASE r.medal
+             WHEN 'Gold' THEN 1
+             WHEN 'Silver' THEN 2
+             WHEN 'Bronze' THEN 3
+             END);
 
 
 -- Q7
