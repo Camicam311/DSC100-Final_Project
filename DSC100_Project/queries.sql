@@ -126,7 +126,7 @@ GROUP BY h.year;
 
 
 -- Q8
-select C.country, sum(CASE WHEN R.medal='Gold' THEN 1 ELSE 0 END) as gold_count
+SELECT C.country, sum(CASE WHEN R.medal='Gold' THEN 1 ELSE 0 END) as gold_count
 FROM country C, results R
 JOIN competitor CP ON R.competitor_id=CP.id
 JOIN athlete A ON CP.athlete_id = A.id
@@ -136,3 +136,7 @@ GROUP BY C.country
 
 ORDER BY gold_count DESC
 LIMIT 10;
+
+
+-- Q9
+
