@@ -16,11 +16,15 @@ WITH in_barca(noc, num_competitors) as
         GROUP BY main_noc
     )
 
-SELECT noc, num_competitors from in_barca
+SELECT country, num_competitors
+FROM in_barca, country
+WHERE noc=alt_noc
 
 UNION
 
-SELECT noc, num_competitors from not_in_barca
+SELECT country, num_competitors
+FROM not_in_barca, country
+WHERE noc=alt_noc
 order by num_competitors DESC;
 
 
@@ -46,7 +50,8 @@ WHERE a.id IN (SELECT a.id
                 JOIN host h ON h.id = r.host_id
                 WHERE h.year > 1900
                 GROUP BY a.id, host_id
-                having count(distinct event_id) > 4);
+                having count(distinct event_id) > 4)
+ORDER BY name;
 
 
 -- Q4
@@ -69,19 +74,40 @@ GROUP BY h.year
 ORDER BY h.year;
 
 -- Q5
-SELECT h.season, h.year, count(distinct a.id)
-from results r
-JOIN host h ON h.id = r.host_id
-JOIN competitor c ON c.id = r.competitor_id
-JOIN athlete a ON c.athlete_id = a.id
-JOIN country ct ON c.noc = ct.alt_noc
-WHERE year > 1947 AND alt_noc ilike 'ind'
-GROUP BY h.season, h.year
-ORDER BY h.year, h.season;
+WITH india_at_games(season, year, num_comp) AS
+        (
+            SELECT h.season, h.year, count(distinct a.id)
+            from results r
+            JOIN host h ON h.id = r.host_id
+            JOIN competitor c ON c.id = r.competitor_id
+            JOIN athlete a ON c.athlete_id = a.id
+            JOIN country ct ON c.noc = ct.alt_noc
+            WHERE year > 1947 AND alt_noc ilike 'ind'
+            GROUP BY h.season, h.year
+--             ORDER BY h.year, h.season
+        ),
+    india_not_at_games(season, year, num_comp) AS
+        (
+            SELECT h.season, h.year, 0
+            FROM host h, india_at_games i
+            WHERE h.main_city NOT IN (
+                SELECT main_city
+                FROM host h1, india_at_games i1
+                WHERE h1.season=i1.season AND
+                      h1.year=i1.year) AND h.year>=1947
+        )
+
+SELECT *
+FROM india_at_games
+UNION
+SELECT *
+FROM india_not_at_games
+ORDER BY year, season
+;
 
 
 -- Q6
-SELECT e.discipline, e.event_name, a.sex, a.name, r.medal, c.noc
+SELECT e.discipline, e.event_name, a.sex, a.name, r.medal
 FROM results r
 JOIN event e on r.event_id = e.id
 JOIN competitor c on r.competitor_id = c.id
@@ -135,7 +161,7 @@ WHERE A.sex='M' AND E.event_name ILIKE '%marathon%' AND E.sport='Athletics' AND 
 GROUP BY C.country
 
 ORDER BY gold_count DESC
-LIMIT 10;
+LIMIT 1;
 
 
 -- Q9
@@ -167,4 +193,5 @@ WITH aey(aid, eid, year, diff_year, diff_med) AS
 
 select distinct name
 from athlete, good_athletes
-where id = ath_id;
+where id = ath_id
+ORDER BY name;

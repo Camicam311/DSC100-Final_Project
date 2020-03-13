@@ -1282,3 +1282,6 @@ INSERT INTO results(competitor_id, event_id, host_id, medal)
 
 ALTER TABLE athlete
 DROP COLUMN old_id;
+
+UPDATE athlete
+SET name = LTRIM(name);
