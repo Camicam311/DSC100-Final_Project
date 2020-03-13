@@ -58,7 +58,7 @@ CREATE TEMPORARY TABLE winter (
 COPY athlete_events FROM '/Users/joshuacastro/Desktop/data_science/dsc100/project/athlete_events.csv' CSV HEADER;
 COPY dictionary FROM '/Users/joshuacastro/Desktop/data_science/dsc100/project/dictionary.csv' CSV HEADER;
 COPY noc_regions FROM '/Users/joshuacastro/Desktop/data_science/dsc100/project/noc_regions.csv' CSV HEADER;
-COPY summer FROM '/Users/joshuacastro/Desktop/data_science/dsc100/project/summer.csv' CSV HEADER;
+COPY summer FROM '/Users/jacobamoul/Desktop/DSC100/Project/summer.csv' CSV HEADER;
 COPY winter FROM '/Users/joshuacastro/Desktop/data_science/dsc100/project/winter.csv' CSV HEADER;
 
 UPDATE athlete_events
@@ -1226,17 +1226,17 @@ INSERT INTO host(main_city, alt_city, year, season)
         with ae(city, year, season) as (select distinct city, year, season from athlete_events),
              summ(city, year) as (select distinct city, year from summer),
              wint(city, year) as (select distinct city, year from winter)
-        
+
         select distinct ae.city as main_city, summ.city as alt_city, ae.year as year, ae.season as season
         from ae, summ
         where ae.year=summ.year and ae.season='Summer'
-        
+
         union
-        
+
         select distinct ae.city, wint.city, ae.year, ae.season
         from ae, wint
         where ae.year=wint.year and ae.season='Winter'
-        
+
         order by year, season, main_city
     );
 
@@ -1246,34 +1246,34 @@ INSERT INTO results(competitor_id, event_id, host_id, medal)
     from athlete_events ae
     join athlete a on ae.id = a.old_id
     join competitor c on a.id = c.athlete_id
-    join event e on (ae.sport = e.sport and 
-                     ae.discipline = e.discipline and 
+    join event e on (ae.sport = e.sport and
+                     ae.discipline = e.discipline and
                      ae.event = e.event_name)
     join host h on (ae.season = h.season and
                     ae.year = h.year and
                     ae.city = h.main_city)
-    
+
     union
-    
+
     select distinct c.id, e.id, h.id, s.medal
     from summer s
     join athlete a on (s.athlete = a.name and s.gender=a.sex)
     join competitor c on a.id = c.athlete_id
-    join event e on (s.sport = e.sport and 
-                     s.discipline = e.discipline and 
+    join event e on (s.sport = e.sport and
+                     s.discipline = e.discipline and
                      s.event = e.event_name)
     join host h on (h.season = 'Summer' and
                     s.year = h.year and
                     s.city = h.alt_city)
-    
-    union 
-    
+
+    union
+
     select distinct c.id, e.id, h.id, w.medal
     from winter w
     join athlete a on (w.athlete = a.name and w.gender=a.sex)
     join competitor c on a.id = c.athlete_id
-    join event e on (w.sport = e.sport and 
-                     w.discipline = e.discipline and 
+    join event e on (w.sport = e.sport and
+                     w.discipline = e.discipline and
                      w.event = e.event_name)
     join host h on (h.season = 'Winter' and
                     w.year = h.year and
@@ -1285,3 +1285,9 @@ DROP COLUMN old_id;
 
 UPDATE athlete
 SET name = LTRIM(name);
+
+
+select athlete
+from summer
+group by athlete
+having count(distinct gender) > 1;

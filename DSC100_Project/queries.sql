@@ -102,8 +102,7 @@ FROM india_at_games
 UNION
 SELECT *
 FROM india_not_at_games
-ORDER BY year, season
-;
+ORDER BY year, season;
 
 
 -- Q6
